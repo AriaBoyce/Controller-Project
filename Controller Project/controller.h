@@ -31,7 +31,7 @@ private:
 	struct multi_button
 	{
 		vector<int> key_code_list;
-		vector<int> output_key_list;
+		vector<key_code> output_key_list;
 		bool press_state = 0;
 	};
 	vector<multi_button> multi_button_codes;
