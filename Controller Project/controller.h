@@ -43,4 +43,6 @@ private:
 
 	DWORD dwResult;
 	XINPUT_STATE state;
+
+	int multi_code_slowdown_rate = 2;
 };

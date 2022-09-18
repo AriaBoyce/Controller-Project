@@ -13,8 +13,8 @@ Controller::Controller()
 	stick_dead_zone[0] = 2500.0;
 	stick_dead_zone[1] = 2500.0;
 	stick_scalar = 0.0000305185;
-	stick_speed[0] = 10.0;
-	stick_speed[1] = 100.0;
+	stick_speed[0] = 15.0;
+	stick_speed[1] = 50.0;
 	ZeroMemory(&state, sizeof(XINPUT_STATE));
 
 	//combo keybinds
@@ -55,8 +55,8 @@ Controller::Controller()
 	multi_button_codes[3].output_key_list[0].key_type = 2;
 
 	multi_button_codes[4].key_code_list.resize(2);//Quick Item Move
-	multi_button_codes[4].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[4].key_code_list[1] = DPAD_UP;
+	multi_button_codes[4].key_code_list[0] = LEFT_SHOULDER;
+	multi_button_codes[4].key_code_list[1] = DPAD_DOWN;
 	multi_button_codes[4].output_key_list.resize(2);
 	multi_button_codes[4].output_key_list[0].key_code = 0;
 	multi_button_codes[4].output_key_list[0].key_type = 1;
@@ -363,9 +363,8 @@ int Controller::update()
 					}
 				}
 				SendInput(multi_button_codes[i].output_key_list.size(), sent_inputs, sizeof(INPUT));
-			}
-			else if (multi_button_codes[i].press_state == 1)//do all key press ups
-			{
+				Sleep(1);
+				//do all key press ups
 				for (int h = 0; h < multi_button_codes[i].output_key_list.size(); h++)
 				{
 					if (multi_button_codes[i].output_key_list[h].key_type == 1)//start at 1 to ignore mouse movement as an option
@@ -402,6 +401,7 @@ int Controller::update()
 
 				}
 				SendInput(multi_button_codes[i].output_key_list.size(), sent_inputs, sizeof(INPUT));
+				multi_button_codes[i].press_state = 0;
 			}
 		}
 	}
@@ -430,12 +430,14 @@ int Controller::update()
 			{
 				if (controller_buttons[i] != 0.0)
 				{
+					button_states[i] = 1;
 					sent_inputs[0].type = INPUT_MOUSE;
 					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
 					SendInput(1, sent_inputs, sizeof(INPUT));
 				}
-				else
+				else if(controller_buttons[i] == 0.0 && button_states[i] == 1)
 				{
+					button_states[i] = 0;
 					sent_inputs[0].type = INPUT_MOUSE;
 					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTUP;
 					SendInput(1, sent_inputs, sizeof(INPUT));
@@ -462,13 +464,15 @@ int Controller::update()
 			{
 				if (controller_buttons[i] != 0.0)
 				{
+					button_states[i] = 1;
 					sent_inputs[0].type = INPUT_MOUSE;
 					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_XDOWN;
 					sent_inputs[0].mi.mouseData = XBUTTON2;
 					SendInput(1, sent_inputs, sizeof(INPUT));
 				}
-				else
+				else if(controller_buttons[i] == 0.0 && button_states[i] == 1)
 				{
+					button_states[i] = 0;
 					sent_inputs[0].type = INPUT_MOUSE;
 					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_XUP;
 					sent_inputs[0].mi.mouseData = XBUTTON2;
@@ -479,13 +483,15 @@ int Controller::update()
 			{
 				if (controller_buttons[i] != 0.0)
 				{
+					button_states[i] = 1;
 					sent_inputs[0].type = INPUT_MOUSE;
 					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_XDOWN;
 					sent_inputs[0].mi.mouseData = XBUTTON1;
 					SendInput(1, sent_inputs, sizeof(INPUT));
 				}
-				else
+				else if(controller_buttons[i] == 0.0 && button_states[i] == 1)
 				{
+					button_states[i] = 0;
 					sent_inputs[0].type = INPUT_MOUSE;
 					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_XUP;
 					sent_inputs[0].mi.mouseData = XBUTTON1;
