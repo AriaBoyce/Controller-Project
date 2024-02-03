@@ -1,180 +1,342 @@
-#include "controller.h"
+#include "Controller.h"
 
 Controller::Controller()
 {
-	controller_buttons.resize(24);
-	button_states.resize(24);
-	button_codes.resize(24);
+	controller_state_current.resize(24);
+	controller_state_pressed.resize(24);
+	controller_state_previous.resize(24);
+	controller_state_released.resize(24);
 
 	stick_dead_zone.resize(2);
 	stick_speed.resize(2);
-	
+
 	trigger_dead_zone = 50.0;
-	stick_dead_zone[0] = 2500.0;
-	stick_dead_zone[1] = 2500.0;
+	stick_dead_zone[0] = 5000.0;
+	stick_dead_zone[1] = 5000.0;
 	stick_scalar = 0.0000305185;
 	stick_speed[0] = 15.0;
 	stick_speed[1] = 50.0;
 	ZeroMemory(&state, sizeof(XINPUT_STATE));
 
-	//combo keybinds
-	//the order of these matters sadly
-	//if there is overlap, where one combo is a subset of another combo, and that subset comes first, only the subset would go off
-	multi_button_codes.resize(15);
+	english_codes.resize(11);
+	english_codes[0] = "LEFT_STICK_X_P = D";
+	english_codes[1] = "LEFT_STICK_X_N = A";
+	english_codes[2] = "LEFT_STICK_Y_P = W";
+	english_codes[3] = "LEFT_STICK_Y_N = S";
 
-	multi_button_codes[0].key_code_list.resize(3);//Quick Slot 4
-	multi_button_codes[0].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[0].key_code_list[1] = LEFT_SHOULDER;
-	multi_button_codes[0].key_code_list[2] = DPAD_LEFT;
-	multi_button_codes[0].output_key_list.resize(1);
-	multi_button_codes[0].output_key_list[0].key_code = 0x34;
-	multi_button_codes[0].output_key_list[0].key_type = 2;
+	english_codes[4] = "RIGHT_STICK_X_P = MOUSE_X_P";
+	english_codes[5] = "RIGHT_STICK_X_N = MOUSE_X_N";
+	english_codes[6] = "RIGHT_STICK_Y_P = MOUSE_Y_P";
+	english_codes[7] = "RIGHT_STICK_Y_N = MOUSE_Y_N";
 
-	multi_button_codes[1].key_code_list.resize(3);//Quick Slot 5
-	multi_button_codes[1].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[1].key_code_list[1] = LEFT_SHOULDER;
-	multi_button_codes[1].key_code_list[2] = DPAD_UP;
-	multi_button_codes[1].output_key_list.resize(1);
-	multi_button_codes[1].output_key_list[0].key_code = 0x35;
-	multi_button_codes[1].output_key_list[0].key_type = 2;
+	english_codes[8] = "LEFT_TRIGGER = RIGHT_CLICK";
+	english_codes[9] = "RIGHT_TRIGGER = LEFT_CLICK";
 
-	multi_button_codes[2].key_code_list.resize(3);//Quick Slot 6
-	multi_button_codes[2].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[2].key_code_list[1] = LEFT_SHOULDER;
-	multi_button_codes[2].key_code_list[2] = DPAD_RIGHT;
-	multi_button_codes[2].output_key_list.resize(1);
-	multi_button_codes[2].output_key_list[0].key_code = 0x36;
-	multi_button_codes[2].output_key_list[0].key_type = 2;
-
-	multi_button_codes[3].key_code_list.resize(3);//Quick Slot 7
-	multi_button_codes[3].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[3].key_code_list[1] = LEFT_SHOULDER;
-	multi_button_codes[3].key_code_list[2] = DPAD_DOWN;
-	multi_button_codes[3].output_key_list.resize(1);
-	multi_button_codes[3].output_key_list[0].key_code = 0x37;
-	multi_button_codes[3].output_key_list[0].key_type = 2;
-
-	multi_button_codes[4].key_code_list.resize(2);//Quick Item Move
-	multi_button_codes[4].key_code_list[0] = LEFT_SHOULDER;
-	multi_button_codes[4].key_code_list[1] = DPAD_DOWN;
-	multi_button_codes[4].output_key_list.resize(2);
-	multi_button_codes[4].output_key_list[0].key_code = 0;
-	multi_button_codes[4].output_key_list[0].key_type = 1;
-	multi_button_codes[4].output_key_list[1].key_code = 0xA2;
-	multi_button_codes[4].output_key_list[1].key_type = 2;
-
-	multi_button_codes[5].key_code_list.resize(2);//Check Chamber
-	multi_button_codes[5].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[5].key_code_list[1] = LEFT_THUMB_DOWN;
-	multi_button_codes[5].output_key_list.resize(2);
-	multi_button_codes[5].output_key_list[0].key_code = 0xA0;
-	multi_button_codes[5].output_key_list[0].key_type = 2;
-	multi_button_codes[5].output_key_list[1].key_code = 0x54;
-	multi_button_codes[5].output_key_list[1].key_type = 2;
-
-	multi_button_codes[6].key_code_list.resize(2);//Weapon Slot 1
-	multi_button_codes[6].key_code_list[0] = LEFT_SHOULDER;
-	multi_button_codes[6].key_code_list[1] = DPAD_LEFT;
-	multi_button_codes[6].output_key_list.resize(1);
-	multi_button_codes[6].output_key_list[0].key_code = 0x31;
-	multi_button_codes[6].output_key_list[0].key_type = 2;
-
-	multi_button_codes[7].key_code_list.resize(2);//weapon slot 2
-	multi_button_codes[7].key_code_list[0] = LEFT_SHOULDER;
-	multi_button_codes[7].key_code_list[1] = DPAD_UP;
-	multi_button_codes[7].output_key_list.resize(2);
-	multi_button_codes[7].output_key_list[0].key_code = 0x32;
-	multi_button_codes[7].output_key_list[0].key_type = 2;
-
-	multi_button_codes[8].key_code_list.resize(2);//weapon slot 3
-	multi_button_codes[8].key_code_list[0] = LEFT_SHOULDER;
-	multi_button_codes[8].key_code_list[1] = DPAD_RIGHT;
-	multi_button_codes[8].output_key_list.resize(2);
-	multi_button_codes[8].output_key_list[0].key_code = 0x33;
-	multi_button_codes[8].output_key_list[0].key_type = 2;
-
-	multi_button_codes[9].key_code_list.resize(2);//Check ammo
-	multi_button_codes[9].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[9].key_code_list[1] = FACE_X;
-	multi_button_codes[9].output_key_list.resize(2);
-	multi_button_codes[9].output_key_list[0].key_code = 0xA2;
-	multi_button_codes[9].output_key_list[0].key_type = 2;
-	multi_button_codes[9].output_key_list[1].key_code = 0x52;
-	multi_button_codes[9].output_key_list[1].key_type = 2;
-
-	multi_button_codes[10].key_code_list.resize(2);//change laser mode
-	multi_button_codes[10].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[10].key_code_list[1] = DPAD_LEFT;
-	multi_button_codes[10].output_key_list.resize(2);
-	multi_button_codes[10].output_key_list[0].key_code = 0xA2;
-	multi_button_codes[10].output_key_list[0].key_type = 2;
-	multi_button_codes[10].output_key_list[1].key_code = 0x54;
-	multi_button_codes[10].output_key_list[1].key_type = 2;
-
-	multi_button_codes[11].key_code_list.resize(2);//change sight
-	multi_button_codes[11].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[11].key_code_list[1] = RIGHT_THUMB_DOWN;
-	multi_button_codes[11].output_key_list.resize(1);
-	multi_button_codes[11].output_key_list[0].key_code = 0x14;
-	multi_button_codes[11].output_key_list[0].key_type = 2;
-
-	multi_button_codes[12].key_code_list.resize(2);//check time
-	multi_button_codes[12].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[12].key_code_list[1] = DPAD_RIGHT;
-	multi_button_codes[12].output_key_list.resize(1);
-	multi_button_codes[12].output_key_list[0].key_code = 0x4F;
-	multi_button_codes[12].output_key_list[0].key_type = 2;
-
-	multi_button_codes[13].key_code_list.resize(2);//face shield
-	multi_button_codes[13].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[13].key_code_list[1] = DPAD_DOWN;
-	multi_button_codes[13].output_key_list.resize(1);
-	multi_button_codes[13].output_key_list[0].key_code = 0x4E;
-	multi_button_codes[13].output_key_list[0].key_type = 2;
-
-	multi_button_codes[14].key_code_list.resize(2);//Check ammo
-	multi_button_codes[14].key_code_list[0] = RIGHT_SHOULDER;
-	multi_button_codes[14].key_code_list[1] = DPAD_UP;
-	multi_button_codes[14].output_key_list.resize(2);
-	multi_button_codes[14].output_key_list[0].key_code = 0xA2;
-	multi_button_codes[14].output_key_list[0].key_type = 2;
-	multi_button_codes[14].output_key_list[1].key_code = 0x42;
-	multi_button_codes[14].output_key_list[1].key_type = 2;
-
-	//single keybinds
-	button_codes[LEFT_STICK_X_P] = { 3,0x44 };
-	button_codes[LEFT_STICK_X_N] = { 3,0x41 };
-	button_codes[LEFT_STICK_Y_P] = { 3,0x57 };
-	button_codes[LEFT_STICK_Y_N] = { 3,0x53 };
-	button_codes[RIGHT_STICK_X_P] = { 0,0 };
-	button_codes[RIGHT_STICK_X_N] = { 0,1 };
-	button_codes[RIGHT_STICK_Y_P] = { 0,2 };
-	button_codes[RIGHT_STICK_Y_N] = { 0,3 };
-	button_codes[LEFT_TRIGGER] = { 1,1 };
-	button_codes[RIGHT_TRIGGER] = { 1,0 };
-	button_codes[DPAD_UP] = { 2, 0x42 };
-	button_codes[DPAD_DOWN] = { 2,0x58 };
-	button_codes[DPAD_LEFT] = { 2,0x54 };
-	button_codes[DPAD_RIGHT] = { 2,0x47 };
-	button_codes[START] = { 2,0x09 };
-	button_codes[BACK] = { 2,0x48 };
-	button_codes[LEFT_THUMB_DOWN] = { 3,0xA0 };
-	button_codes[RIGHT_THUMB_DOWN] = { 2,0x56 };
-	button_codes[LEFT_SHOULDER] = { 1,2 };
-	button_codes[RIGHT_SHOULDER] = { 1,3 };
-	button_codes[FACE_A] = { 2,0x20 };
-	button_codes[FACE_B] = { 2,0x43 };
-	button_codes[FACE_X] = { 2,0x52 };
-	button_codes[FACE_Y] = { 2,0x46 };
-
+	english_codes[10] = "FACE_X = R";
+	button_states.resize(11);
+	Convert_Key_Codes();
 }
 
-int Controller::update()
+void Controller::Convert_Key_Codes()
 {
+	vector<string> temp_list;
+	for (int i = 0; i < english_codes.size(); i++)
+	{
+		temp_list.resize(0);
+		while (true)
+		{
+			temp_list.push_back(english_codes[i].substr(0, english_codes[i].find(" ")));
+			english_codes[i].erase(0,english_codes[i].find(" ")+1);
+			if (temp_list[temp_list.size() - 1] == "=")
+			{
+				temp_list.pop_back();
+				temp_list.push_back(english_codes[i].substr(0, english_codes[i].find(" ")));
+				break;
+			}
+		}
+
+		vector<int> temp_code;
+		//get input codes
+		for (int i = 0; i < temp_list.size() - 1; i++)
+		{
+			if (temp_list[i] == "LEFT_STICK_X_P")
+			{
+				temp_code.push_back(0);
+			}
+			else if (temp_list[i] == "LEFT_STICK_X_N")
+			{
+				temp_code.push_back(1);
+			}
+			else if (temp_list[i] == "LEFT_STICK_Y_P")
+			{
+				temp_code.push_back(2);
+			}
+			else if (temp_list[i] == "LEFT_STICK_Y_N")
+			{
+				temp_code.push_back(3);
+			}
+			else if (temp_list[i] == "RIGHT_STICK_X_P")
+			{
+				temp_code.push_back(4);
+			}
+			else if (temp_list[i] == "RIGHT_STICK_X_N")
+			{
+				temp_code.push_back(5);
+			}
+			else if (temp_list[i] == "RIGHT_STICK_Y_P")
+			{
+				temp_code.push_back(6);
+			}
+			else if (temp_list[i] == "RIGHT_STICK_Y_N")
+			{
+				temp_code.push_back(7);
+			}
+			else if (temp_list[i] == "LEFT_TRIGGER")
+			{
+				temp_code.push_back(8);
+			}
+			else if (temp_list[i] == "RIGHT_TRIGGER")
+			{
+				temp_code.push_back(9);
+			}
+			else if (temp_list[i] == "DPAD_UP")
+			{
+				temp_code.push_back(10);
+			}
+			else if (temp_list[i] == "DPAD_DOWN")
+			{
+				temp_code.push_back(11);
+			}
+			else if (temp_list[i] == "DPAD_LEFT")
+			{
+				temp_code.push_back(12);
+			}
+			else if (temp_list[i] == "DPAD_RIGHT")
+			{
+				temp_code.push_back(13);
+			}
+			else if (temp_list[i] == "START")
+			{
+				temp_code.push_back(14);
+			}
+			else if (temp_list[i] == "BACK")
+			{
+				temp_code.push_back(15);
+			}
+			else if (temp_list[i] == "LEFT_THUMB_DOWN")
+			{
+				temp_code.push_back(16);
+			}
+			else if (temp_list[i] == "RIGHT_THUMB_DOWN")
+			{
+				temp_code.push_back(17);
+			}
+			else if (temp_list[i] == "LEFT_SHOULDER")
+			{
+				temp_code.push_back(18);
+			}
+			else if (temp_list[i] == "RIGHT_SHOULDER")
+			{
+				temp_code.push_back(19);
+			}
+			else if (temp_list[i] == "FACE_A")
+			{
+				temp_code.push_back(20);
+			}
+			else if (temp_list[i] == "FACE_B")
+			{
+				temp_code.push_back(21);
+			}
+			else if (temp_list[i] == "FACE_X")
+			{
+				temp_code.push_back(22);
+			}
+			else if (temp_list[i] == "FACE_Y")
+			{
+				temp_code.push_back(23);
+			}
+		}
+
+		//get output code
+		if (temp_list[temp_list.size() - 1] == "LEFT_CLICK")
+		{
+			temp_code.push_back(0x01);
+		}
+		else if (temp_list[temp_list.size() - 1] == "RIGHT_CLICK")
+		{
+			temp_code.push_back(0x02);
+		}
+		else if (temp_list[temp_list.size() - 1] == "BACKSPACE")
+		{
+			temp_code.push_back(0x08);
+		}
+		else if (temp_list[temp_list.size() - 1] == "TAB")
+		{
+			temp_code.push_back(0x09);
+		}
+		else if (temp_list[temp_list.size() - 1] == "ENTER")
+		{
+			temp_code.push_back(0x0D);
+		}
+		else if (temp_list[temp_list.size() - 1] == "SHIFT")
+		{
+			temp_code.push_back(0x10);
+		}
+		else if (temp_list[temp_list.size() - 1] == "CTRL")
+		{
+			temp_code.push_back(0x11);
+		}
+		else if (temp_list[temp_list.size() - 1] == "ALT")
+		{
+			temp_code.push_back(0x12);
+		}
+		else if (temp_list[temp_list.size() - 1] == "CAPS LOCK")
+		{
+			temp_code.push_back(0x14);
+		}
+		else if (temp_list[temp_list.size() - 1] == "ESC")
+		{
+			temp_code.push_back(0x1B);
+		}
+		else if (temp_list[temp_list.size() - 1] == "SPACE")
+		{
+			temp_code.push_back(0x20);
+		}
+		else if (temp_list[temp_list.size() - 1] == "A")
+		{
+			temp_code.push_back(0x41);
+		}
+		else if (temp_list[temp_list.size() - 1] == "B")
+		{
+			temp_code.push_back(0x42);
+		}
+		else if (temp_list[temp_list.size() - 1] == "C")
+		{
+			temp_code.push_back(0x43);
+		}
+		else if (temp_list[temp_list.size() - 1] == "D")
+		{
+			temp_code.push_back(0x44);
+		}
+		else if (temp_list[temp_list.size() - 1] == "E")
+		{
+			temp_code.push_back(0x45);
+		}
+		else if (temp_list[temp_list.size() - 1] == "F")
+		{
+			temp_code.push_back(0x46);
+		}
+		else if (temp_list[temp_list.size() - 1] == "G")
+		{
+			temp_code.push_back(0x47);
+		}
+		else if (temp_list[temp_list.size() - 1] == "H")
+		{
+			temp_code.push_back(0x48);
+		}
+		else if (temp_list[temp_list.size() - 1] == "I")
+		{
+			temp_code.push_back(0x49);
+		}
+		else if (temp_list[temp_list.size() - 1] == "J")
+		{
+			temp_code.push_back(0x4A);
+		}
+		else if (temp_list[temp_list.size() - 1] == "K")
+		{
+			temp_code.push_back(0x4B);
+		}
+		else if (temp_list[temp_list.size() - 1] == "L")
+		{
+			temp_code.push_back(0x4C);
+		}
+		else if (temp_list[temp_list.size() - 1] == "M")
+		{
+			temp_code.push_back(0x4D);
+		}
+		else if (temp_list[temp_list.size() - 1] == "N")
+		{
+			temp_code.push_back(0x4E);
+		}
+		else if (temp_list[temp_list.size() - 1] == "O")
+		{
+			temp_code.push_back(0x4F);
+		}
+		else if (temp_list[temp_list.size() - 1] == "P")
+		{
+			temp_code.push_back(0x50);
+		}
+		else if (temp_list[temp_list.size() - 1] == "Q")
+		{
+			temp_code.push_back(0x51);
+		}
+		else if (temp_list[temp_list.size() - 1] == "R")
+		{
+			temp_code.push_back(0x52);
+		}
+		else if (temp_list[temp_list.size() - 1] == "S")
+		{
+			temp_code.push_back(0x53);
+		}
+		else if (temp_list[temp_list.size() - 1] == "T")
+		{
+			temp_code.push_back(0x54);
+		}
+		else if (temp_list[temp_list.size() - 1] == "U")
+		{
+			temp_code.push_back(0x55);
+		}
+		else if (temp_list[temp_list.size() - 1] == "V")
+		{
+			temp_code.push_back(0x56);
+		}
+		else if (temp_list[temp_list.size() - 1] == "W")
+		{
+			temp_code.push_back(0x57);
+		}
+		else if (temp_list[temp_list.size() - 1] == "X")
+		{
+			temp_code.push_back(0x58);
+		}
+		else if (temp_list[temp_list.size() - 1] == "Y")
+		{
+			temp_code.push_back(0x59);
+		}
+		else if (temp_list[temp_list.size() - 1] == "Z")
+		{
+			temp_code.push_back(0x5A);
+		}
+		else if (temp_list[temp_list.size() - 1] == "MOUSE_X_P")
+		{
+			temp_code.push_back(9000);
+		}
+		else if (temp_list[temp_list.size() - 1] == "MOUSE_X_N")
+		{
+			temp_code.push_back(9001);
+		}
+		else if (temp_list[temp_list.size() - 1] == "MOUSE_Y_P")
+		{
+			temp_code.push_back(9002);
+		}
+		else if (temp_list[temp_list.size() - 1] == "MOUSE_Y_N")
+		{
+			temp_code.push_back(9003);
+		}
+
+		input_code.push_back(temp_code);
+	}
+
+
+}	
+
+void Controller::Update()
+{
+
 	POINT p;
 	GetCursorPos(&p);
 	cursor_x = p.x;
 	cursor_y = p.y;
+
 	ZeroMemory(&state, sizeof(XINPUT_STATE));
 	dwResult = XInputGetState(0, &state);
 	if (dwResult != ERROR_SUCCESS)
@@ -182,9 +344,53 @@ int Controller::update()
 		//update controller
 		ZeroMemory(&state, sizeof(XINPUT_STATE));
 		dwResult = XInputGetState(0, &state);
-		return(1);
+		return;
 	}
 
+	//get previous controller state
+	for (int i = 0; i < controller_state_current.size(); i++)
+	{
+		controller_state_previous[i] = controller_state_current[i];
+	}
+
+	//update controller state
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) { controller_state_current[10] = 1.0; } else { controller_state_current[10] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) { controller_state_current[11] = 1.0; } else { controller_state_current[11] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) { controller_state_current[12] = 1.0; } else { controller_state_current[12] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) { controller_state_current[13] = 1.0; } else { controller_state_current[13] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_START) { controller_state_current[14] = 1.0; } else { controller_state_current[14] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) { controller_state_current[15] = 1.0; } else { controller_state_current[15] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) { controller_state_current[16] = 1.0; } else { controller_state_current[16] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) { controller_state_current[17] = 1.0; } else { controller_state_current[17] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) { controller_state_current[18] = 1.0; } else { controller_state_current[18] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) { controller_state_current[19] = 1.0; } else { controller_state_current[19] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_A) { controller_state_current[20] = 1.0; } else { controller_state_current[20] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_B) { controller_state_current[21] = 1.0; } else { controller_state_current[21] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_X) { controller_state_current[22] = 1.0; } else { controller_state_current[22] = 0.0; }
+	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_Y) { controller_state_current[23] = 1.0; } else { controller_state_current[23] = 0.0; }
+
+	//use previous and current to check for pressed and released
+	for (int i = 10; i < controller_state_current.size(); i++)
+	{
+		if (controller_state_previous[i] == 0.0 && controller_state_current[i] == 1.0)
+		{
+			controller_state_pressed[i] = 1.0;
+		}
+		else
+		{
+			controller_state_pressed[i] = 0.0;
+		}
+		if (controller_state_previous[i] == 1.0 && controller_state_current[i] == 0.0)
+		{
+			controller_state_released[i] = 1.0;
+		}
+		else
+		{
+			controller_state_released[i] = 0.0;
+		}
+	}
+
+	//get stick info
 	//get controller info
 	float temp_stick_input = 0.0;
 
@@ -199,13 +405,13 @@ int Controller::update()
 	temp_stick_input *= stick_scalar;
 	if (temp_stick_input > 0.0)
 	{
-		controller_buttons[0] = temp_stick_input;
-		controller_buttons[1] = 0.0;
+		controller_state_current[0] = temp_stick_input;
+		controller_state_current[1] = 0.0;
 	}
 	else if (temp_stick_input <= 0.0)
 	{
-		controller_buttons[0] = 0.0;
-		controller_buttons[1] = temp_stick_input;
+		controller_state_current[0] = 0.0;
+		controller_state_current[1] = temp_stick_input;
 	}
 
 
@@ -219,13 +425,13 @@ int Controller::update()
 
 	if (temp_stick_input > 0.0)
 	{
-		controller_buttons[2] = temp_stick_input;
-		controller_buttons[3] = 0.0;
+		controller_state_current[2] = temp_stick_input;
+		controller_state_current[3] = 0.0;
 	}
 	else if (temp_stick_input <= 0.0)
 	{
-		controller_buttons[2] = 0.0;
-		controller_buttons[3] = temp_stick_input;
+		controller_state_current[2] = 0.0;
+		controller_state_current[3] = temp_stick_input;
 	}
 
 	//read right stick X info
@@ -238,13 +444,13 @@ int Controller::update()
 	temp_stick_input *= stick_scalar;
 	if (temp_stick_input > 0.0)
 	{
-		controller_buttons[4] = temp_stick_input;
-		controller_buttons[5] = 0.0;
+		controller_state_current[4] = temp_stick_input;
+		controller_state_current[5] = 0.0;
 	}
 	else if (temp_stick_input <= 0.0)
 	{
-		controller_buttons[4] = 0.0;
-		controller_buttons[5] = temp_stick_input;
+		controller_state_current[4] = 0.0;
+		controller_state_current[5] = temp_stick_input;
 	}
 
 	//get right stick y info
@@ -257,286 +463,135 @@ int Controller::update()
 
 	if (temp_stick_input > 0.0)
 	{
-		controller_buttons[6] = temp_stick_input;
-		controller_buttons[7] = 0.0;
+		controller_state_current[6] = temp_stick_input;
+		controller_state_current[7] = 0.0;
 	}
 	else if (temp_stick_input <= 0.0)
 	{
-		controller_buttons[6] = 0.0;
-		controller_buttons[7] = temp_stick_input;
+		controller_state_current[6] = 0.0;
+		controller_state_current[7] = temp_stick_input;
 	}
 
 	//read left trigger input
-	controller_buttons[8] = state.Gamepad.bLeftTrigger;
-	if (controller_buttons[8] < trigger_dead_zone)
+	controller_state_current[8] = state.Gamepad.bLeftTrigger;
+	if (controller_state_current[8] < trigger_dead_zone)
 	{
-		controller_buttons[8] = 0.0;
+		controller_state_current[8] = 0.0;
 	}
 
 	//read right trigger input
-	controller_buttons[9] = state.Gamepad.bRightTrigger;
-	if (controller_buttons[9] < trigger_dead_zone)
+	controller_state_current[9] = state.Gamepad.bRightTrigger;
+	if (controller_state_current[9] < trigger_dead_zone)
 	{
-		controller_buttons[9] = 0.0;
+		controller_state_current[9] = 0.0;
 	}
 
-	//read button inputs
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_UP) { controller_buttons[10] = 1.0; } else { controller_buttons[10] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_DOWN) { controller_buttons[11] = 1.0; } else { controller_buttons[11] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_LEFT) { controller_buttons[12] = 1.0; } else { controller_buttons[12] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_DPAD_RIGHT) { controller_buttons[13] = 1.0; } else { controller_buttons[13] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_START) { controller_buttons[14] = 1.0; } else { controller_buttons[14] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_BACK) { controller_buttons[15] = 1.0; } else { controller_buttons[15] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB) { controller_buttons[16] = 1.0; } else { controller_buttons[16] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB) { controller_buttons[17] = 1.0; } else { controller_buttons[17] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) { controller_buttons[18] = 1.0; } else { controller_buttons[18] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) { controller_buttons[19] = 1.0; } else { controller_buttons[19] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_A) { controller_buttons[20] = 1.0; } else { controller_buttons[20] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_B) { controller_buttons[21] = 1.0; } else { controller_buttons[21] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_X) { controller_buttons[22] = 1.0; } else { controller_buttons[22] = 0.0; }
-	if (state.Gamepad.wButtons & XINPUT_GAMEPAD_Y) { controller_buttons[23] = 1.0; } else { controller_buttons[23] = 0.0; }
-
-	//check for multi button inputs
-	int button_count;
-	int current_count = 0;
-	for (int i = 0; i < multi_button_codes.size(); i++)
+	int key_check = 0;
+	//check for full keycode list
+	for (int i = 0; i < input_code.size(); i++)
 	{
-		button_count = multi_button_codes[i].key_code_list.size();
-		current_count = 0;
-		for (int h = 0; h < multi_button_codes[i].key_code_list.size(); h++)
+		int count = 0;
+		for (int h = 0; h < input_code[i].size() - 1; h++)
 		{
-			if (controller_buttons[multi_button_codes[i].key_code_list[h]] != 0.0)
+			if (controller_state_current[input_code[i][h]] != 0.0)
 			{
-				current_count++;
+				count++;
+			}
+		}
+		if (count == input_code[i].size() - 1 && button_states[i] == false)//press down
+		{
+			//keycode is met
+			//do output
+			if (input_code[i][input_code[i].size() - 1] == 0x01)
+			{
+				button_states[i] = true;
+				sent_inputs[key_check].type = INPUT_MOUSE;
+				sent_inputs[key_check].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+				key_check++;
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 0x02)
+			{
+				button_states[i] = true;
+				sent_inputs[key_check].type = INPUT_MOUSE;
+				sent_inputs[key_check].mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
+				key_check++;
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 9000)
+			{
+				cursor_x += controller_state_current[4] * stick_speed[0];
+				mouse_event(0x0001, controller_state_current[4] * stick_speed[1], 0, 0, 0);
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 9001)
+			{
+				cursor_x += controller_state_current[5] * stick_speed[0];
+				mouse_event(0x0001, controller_state_current[5] * stick_speed[1], 0, 0, 0);
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 9002)
+			{
+				cursor_y -= controller_state_current[6] * stick_speed[0];
+				mouse_event(0x0001, 0, controller_state_current[6] * stick_speed[1] * -1, 0, 0);
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 9003)
+			{
+				cursor_y -= controller_state_current[7] * stick_speed[0];
+				mouse_event(0x0001, 0, controller_state_current[7] * stick_speed[1] * -1, 0, 0);
 			}
 			else
 			{
-				multi_button_codes[i].press_state = 0;
-				break;
+				button_states[i] = true;
+				sent_inputs[key_check].type = INPUT_KEYBOARD;
+				sent_inputs[key_check].ki.wVk = input_code[i][input_code[i].size() - 1];
+				sent_inputs[key_check].ki.dwFlags = 0;
+				key_check++;
 			}
 		}
-		if (button_count == current_count)
+		else if(count != input_code[i].size() - 1 && button_states[i] == true)//press up
 		{
-			//all buttons are hit
-			//zero out those buttons so they arent used for other inputs
-			for (int h = 0; h < multi_button_codes[i].key_code_list.size(); h++)
+			if (input_code[i][input_code[i].size() - 1] == 0x01)
 			{
-				controller_buttons[multi_button_codes[i].key_code_list[h]] = 0;
+				button_states[i] = false;
+				sent_inputs[key_check].type = INPUT_MOUSE;
+				sent_inputs[key_check].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+				key_check++;
 			}
-			//do the mapped input
-			//do all key press downs
-			if (multi_button_codes[i].press_state == 0)
+			else if (input_code[i][input_code[i].size() - 1] == 0x02)
 			{
-				multi_button_codes[i].press_state = 1;
-				for (int h = 0; h < multi_button_codes[i].output_key_list.size(); h++)
-				{
-					if (multi_button_codes[i].output_key_list[h].key_type == 1)//start at 1 to ignore mouse movement as an option
-					{
-						if (multi_button_codes[i].output_key_list[h].key_code == 0)
-						{
-							sent_inputs[h].type = INPUT_MOUSE;
-							sent_inputs[h].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-						}
-						else if (multi_button_codes[i].output_key_list[h].key_code == 1)
-						{
-							sent_inputs[h].type = INPUT_MOUSE;
-							sent_inputs[h].mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-						}
-						else if (multi_button_codes[i].output_key_list[h].key_code == 2)
-						{
-							sent_inputs[h].type = INPUT_MOUSE;
-							sent_inputs[h].mi.dwFlags = MOUSEEVENTF_XDOWN;
-							sent_inputs[h].mi.mouseData = XBUTTON2;
-						}
-						else if (multi_button_codes[i].output_key_list[h].key_code == 3)
-						{
-							sent_inputs[h].type = INPUT_MOUSE;
-							sent_inputs[h].mi.dwFlags = MOUSEEVENTF_XDOWN;
-							sent_inputs[h].mi.mouseData = XBUTTON1;
-						}
-					}
-					else if (multi_button_codes[i].output_key_list[h].key_type == 2)
-					{
-						sent_inputs[h].type = INPUT_KEYBOARD;
-						sent_inputs[h].ki.wVk = multi_button_codes[i].output_key_list[h].key_code;
-						sent_inputs[h].ki.dwFlags = 0;
-					}
-				}
-				SendInput(multi_button_codes[i].output_key_list.size(), sent_inputs, sizeof(INPUT));
-				Sleep(1);
-				//do all key press ups
-				for (int h = 0; h < multi_button_codes[i].output_key_list.size(); h++)
-				{
-					if (multi_button_codes[i].output_key_list[h].key_type == 1)//start at 1 to ignore mouse movement as an option
-					{
-						if (multi_button_codes[i].output_key_list[h].key_code == 0)
-						{
-							sent_inputs[h].type = INPUT_MOUSE;
-							sent_inputs[h].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-						}
-						else if (multi_button_codes[i].output_key_list[h].key_code == 1)
-						{
-							sent_inputs[h].type = INPUT_MOUSE;
-							sent_inputs[h].mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-						}
-						else if (multi_button_codes[i].output_key_list[h].key_code == 2)
-						{
-							sent_inputs[h].type = INPUT_MOUSE;
-							sent_inputs[h].mi.dwFlags = MOUSEEVENTF_XUP;
-							sent_inputs[h].mi.mouseData = XBUTTON2;
-						}
-						else if (multi_button_codes[i].output_key_list[h].key_code == 3)
-						{
-							sent_inputs[h].type = INPUT_MOUSE;
-							sent_inputs[h].mi.dwFlags = MOUSEEVENTF_XUP;
-							sent_inputs[h].mi.mouseData = XBUTTON1;
-						}
-					}
-					else if (multi_button_codes[i].output_key_list[h].key_type == 2)
-					{
-						sent_inputs[h].type = INPUT_KEYBOARD;
-						sent_inputs[h].ki.wVk = multi_button_codes[i].output_key_list[h].key_code;
-						sent_inputs[h].ki.dwFlags = KEYEVENTF_KEYUP;
-					}
+				button_states[i] = false;
+				sent_inputs[key_check].type = INPUT_MOUSE;
+				sent_inputs[key_check].mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+				key_check++;
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 9000)
+			{
 
-				}
-				SendInput(multi_button_codes[i].output_key_list.size(), sent_inputs, sizeof(INPUT));
-				multi_button_codes[i].press_state = 0;
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 9001)
+			{
+
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 9002)
+			{
+
+			}
+			else if (input_code[i][input_code[i].size() - 1] == 9003)
+			{
+
+			}
+			else
+			{
+				button_states[i] = false;
+				sent_inputs[key_check].type = INPUT_KEYBOARD;
+				sent_inputs[key_check].ki.wVk = input_code[i][input_code[i].size() - 1];
+				sent_inputs[key_check].ki.dwFlags = KEYEVENTF_KEYUP;
+				key_check++;
 			}
 		}
 	}
-
-	//check for single button inputs
-	for (int i = 0; i < 24; i++)
-	{
-		if (button_codes[i].key_type == 0)//mouse movement
-		{	
-			if (button_codes[i].key_code == 0 || button_codes[i].key_code == 1)//x 
-			{
-				cursor_x += controller_buttons[i] * stick_speed[0];
-				mouse_event(0x0001, controller_buttons[i] * stick_speed[1], 0, 0, 0);
-			}
-			else if (button_codes[i].key_code == 2 || button_codes[i].key_code == 3)//y 
-			{
-				cursor_y -= controller_buttons[i] * stick_speed[0];
-				mouse_event(0x0001, 0, controller_buttons[i] * stick_speed[1] * -1, 0, 0);
-			}
-			SetCursorPos(cursor_x, cursor_y);
-
-		}
-		else if (button_codes[i].key_type == 1)//mouse button
-		{
-			if (button_codes[i].key_code == 0)
-			{
-				if (controller_buttons[i] != 0.0)
-				{
-					button_states[i] = 1;
-					sent_inputs[0].type = INPUT_MOUSE;
-					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
-					SendInput(1, sent_inputs, sizeof(INPUT));
-				}
-				else if(controller_buttons[i] == 0.0 && button_states[i] == 1)
-				{
-					button_states[i] = 0;
-					sent_inputs[0].type = INPUT_MOUSE;
-					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-					SendInput(1, sent_inputs, sizeof(INPUT));
-				}
-			}
-			else if (button_codes[i].key_code == 1)
-			{
-				if (controller_buttons[i] != 0.0)
-				{
-					button_states[i] = 1;
-					sent_inputs[0].type = INPUT_MOUSE;
-					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-					SendInput(1, sent_inputs, sizeof(INPUT));
-				}
-				else if (controller_buttons[i] == 0.0 && button_states[i] == 1)
-				{
-					button_states[i] = 0;
-					sent_inputs[0].type = INPUT_MOUSE;
-					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_RIGHTUP;
-					SendInput(1, sent_inputs, sizeof(INPUT));
-				}
-			}
-			else if (button_codes[i].key_code == 2)
-			{
-				if (controller_buttons[i] != 0.0)
-				{
-					button_states[i] = 1;
-					sent_inputs[0].type = INPUT_MOUSE;
-					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_XDOWN;
-					sent_inputs[0].mi.mouseData = XBUTTON2;
-					SendInput(1, sent_inputs, sizeof(INPUT));
-				}
-				else if(controller_buttons[i] == 0.0 && button_states[i] == 1)
-				{
-					button_states[i] = 0;
-					sent_inputs[0].type = INPUT_MOUSE;
-					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_XUP;
-					sent_inputs[0].mi.mouseData = XBUTTON2;
-					SendInput(1, sent_inputs, sizeof(INPUT));
-				}
-			}
-			else if (button_codes[i].key_code == 3)
-			{
-				if (controller_buttons[i] != 0.0)
-				{
-					button_states[i] = 1;
-					sent_inputs[0].type = INPUT_MOUSE;
-					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_XDOWN;
-					sent_inputs[0].mi.mouseData = XBUTTON1;
-					SendInput(1, sent_inputs, sizeof(INPUT));
-				}
-				else if(controller_buttons[i] == 0.0 && button_states[i] == 1)
-				{
-					button_states[i] = 0;
-					sent_inputs[0].type = INPUT_MOUSE;
-					sent_inputs[0].mi.dwFlags = MOUSEEVENTF_XUP;
-					sent_inputs[0].mi.mouseData = XBUTTON1;
-					SendInput(1, sent_inputs, sizeof(INPUT));
-				}
-			}
-		}
-		else if (button_codes[i].key_type == 2)//keyboard tap
-		{
-			if (controller_buttons[i] != 0.0 && button_states[i] == 0)
-			{
-				button_states[i] = 1;
-				sent_inputs[0].type = INPUT_KEYBOARD;
-				sent_inputs[0].ki.wVk = button_codes[i].key_code;
-				sent_inputs[0].ki.dwFlags = 0;
-				sent_inputs[1].type = INPUT_KEYBOARD;
-				sent_inputs[1].ki.wVk = button_codes[i].key_code;
-				sent_inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
-				SendInput(2, sent_inputs, sizeof(INPUT));
-			}
-			else if (controller_buttons[i] == 0.0 && button_states[i] == 1)
-			{
-				button_states[i] = 0;
-			}
-		}
-		else if (button_codes[i].key_type == 3)//keyboard hold
-		{
-			if (controller_buttons[i] != 0.0)
-			{
-				button_states[i] = 1;
-				sent_inputs[0].type = INPUT_KEYBOARD;
-				sent_inputs[0].ki.wVk = button_codes[i].key_code;
-				sent_inputs[0].ki.dwFlags = 0;
-				SendInput(1, sent_inputs, sizeof(INPUT));
-			}
-			else if (controller_buttons[i] == 0.0 && button_states[i] == 1)
-			{
-				button_states[i] = 0;
-				sent_inputs[0].type = INPUT_KEYBOARD;
-				sent_inputs[0].ki.wVk = button_codes[i].key_code;
-				sent_inputs[0].ki.dwFlags = KEYEVENTF_KEYUP;
-				SendInput(1, sent_inputs, sizeof(INPUT));
-			}
-		}
-	}
+	SendInput(key_check, sent_inputs, sizeof(INPUT));
 	SetCursorPos(cursor_x, cursor_y);
-	return(0);
+}
+
+Controller::~Controller()
+{
+
 }
